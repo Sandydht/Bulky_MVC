@@ -5,19 +5,19 @@ using Microsoft.AspNetCore.Mvc;
 namespace BulkyBook.Web.Areas.Admin.Controllers;
 
 [Area("Admin")]
-public class CategoryController : Controller
+public class ProductController : Controller
 {
     private readonly IUnitOfWork _unitOfWork;
     
-    public CategoryController(IUnitOfWork unitOfWork)
+    public ProductController(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
     }
     
     public IActionResult Index()
     {
-        List<Category> objectCategoryList = _unitOfWork.Category.GetAll().ToList();
-        return View(objectCategoryList);
+        List<Product> objectProductList = _unitOfWork.Product.GetAll().ToList();
+        return View(objectProductList);
     }
     
     public IActionResult Create()
@@ -26,18 +26,13 @@ public class CategoryController : Controller
     }
 
     [HttpPost]
-    public IActionResult Create(Category obj)
+    public IActionResult Create(Product obj)
     {
-        if (obj.Name == obj.DisplayOrder.ToString())
-        {
-            ModelState.AddModelError("Name", "The Display Order cannot exactly match the Name.");
-        }
-
         if (ModelState.IsValid)
         {
-            _unitOfWork.Category.Add(obj);
+            _unitOfWork.Product.Add(obj);
             _unitOfWork.Save();
-            TempData["success"] = "Category created successfully";
+            TempData["success"] = "Product created successfully";
             return RedirectToAction("Index");
         }
 
@@ -51,29 +46,24 @@ public class CategoryController : Controller
             return NotFound();
         }
 
-        Category? categoryFromDB = _unitOfWork.Category.Get(u => u.Id == id);
+        Product? productFromDb = _unitOfWork.Product.Get(u => u.Id == id);
 
-        if (categoryFromDB == null)
+        if (productFromDb == null)
         {
             return NotFound();
         }
 
-        return View(categoryFromDB);
+        return View(productFromDb);
     }
 
     [HttpPost]
-    public IActionResult Edit(Category obj)
+    public IActionResult Edit(Product obj)
     {
-        if (obj.Name == obj.DisplayOrder.ToString())
-        {
-            ModelState.AddModelError("Name", "The Display Order cannot exactly match the Name.");
-        }
-
         if (ModelState.IsValid)
         {
-            _unitOfWork.Category.Update(obj);
+            _unitOfWork.Product.Update(obj);
             _unitOfWork.Save();
-            TempData["success"] = "Category updated successfully";
+            TempData["success"] = "Product updated successfully";
             return RedirectToAction("Index");
         }
 
@@ -87,29 +77,29 @@ public class CategoryController : Controller
             return NotFound();
         }
 
-        Category? categoryFromDB = _unitOfWork.Category.Get(u => u.Id == id);
+        Product? productFromDB = _unitOfWork.Product.Get(u => u.Id == id);
 
-        if (categoryFromDB == null)
+        if (productFromDB == null)
         {
             return NotFound();
         }
 
-        return View(categoryFromDB);
+        return View(productFromDB);
     }
 
     [HttpPost, ActionName("Delete")]
     public IActionResult DeletePOST(int? id)
     {
-        Category? obj = _unitOfWork.Category.Get(u => u.Id == id);
+        Product? obj = _unitOfWork.Product.Get(u => u.Id == id);
 
         if (obj == null)
         {
             return NotFound();
         }
 
-        _unitOfWork.Category.Remove(obj);
+        _unitOfWork.Product.Remove(obj);
         _unitOfWork.Save();
-        TempData["success"] = "Category deleted successfully";
+        TempData["success"] = "Product deleted successfully";
         return RedirectToAction("Index");
     }
 }
