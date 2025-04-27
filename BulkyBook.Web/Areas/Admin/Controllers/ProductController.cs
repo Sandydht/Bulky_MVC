@@ -20,11 +20,11 @@ public class ProductController : Controller
 
     public IActionResult Index()
     {
-        List<Product> objectProductList = _unitOfWork.Product.GetAll().ToList();
+        List<Product> objectProductList = _unitOfWork.Product.GetAll(includeProperties: "Category").ToList();
         return View(objectProductList);
     }
 
-    public IActionResult Upsert(int? id) 
+    public IActionResult Upsert(int? id)
     {
         ProductVM productVm = new()
         {
@@ -85,7 +85,7 @@ public class ProductController : Controller
             {
                 _unitOfWork.Product.Update(productVm.Product);
             }
-            
+
             _unitOfWork.Save();
             TempData["success"] = "Product created successfully";
             return RedirectToAction("Index");
@@ -102,36 +102,38 @@ public class ProductController : Controller
         }
     }
 
+    #region API CALLS
+
+    [HttpGet]
+    public IActionResult GetAll()
+    {
+        List<Product> objectProductList = _unitOfWork.Product.GetAll(includeProperties: "Category").ToList();
+        return Json(new { data = objectProductList });
+    }
+
+    [HttpDelete]
     public IActionResult Delete(int? id)
     {
-        if (id == null || id == 0)
+        var productToBeDeleted = _unitOfWork.Product.Get(u => u.Id == id);
+
+        if (productToBeDeleted == null)
         {
-            return NotFound();
+            return Json(new { success = false, message = "Error while deleting the product" });
         }
+        
+        // Delete the old image
+        var oldImagePath = Path.Combine(_webHostEnvironment.WebRootPath, productToBeDeleted.ImageUrl.TrimStart('\\'));
 
-        Product? productFromDB = _unitOfWork.Product.Get(u => u.Id == id);
-
-        if (productFromDB == null)
+        if (System.IO.File.Exists(oldImagePath))
         {
-            return NotFound();
+            System.IO.File.Delete(oldImagePath);
         }
-
-        return View(productFromDB);
-    }
-
-    [HttpPost, ActionName("Delete")]
-    public IActionResult DeletePOST(int? id)
-    {
-        Product? obj = _unitOfWork.Product.Get(u => u.Id == id);
-
-        if (obj == null)
-        {
-            return NotFound();
-        }
-
-        _unitOfWork.Product.Remove(obj);
+        
+        _unitOfWork.Product.Remove(productToBeDeleted);
         _unitOfWork.Save();
-        TempData["success"] = "Product deleted successfully";
-        return RedirectToAction("Index");
+        
+        List<Product> objProductList = _unitOfWork.Product.GetAll(includeProperties: "Category").ToList();
+        return Json(new { success = true, message = "The product has been successfully deleted" });
     }
+    #endregion
 }
